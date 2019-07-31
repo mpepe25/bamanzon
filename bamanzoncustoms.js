@@ -1,5 +1,5 @@
  const mysql = require("mysql");
- const fs = require("fs");
+//  const fs = require("fs");
  const inquirer = require ("inquirer");
 
  const connection = mysql.createConnection({
