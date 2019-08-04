@@ -16,28 +16,35 @@
    password: "password",
    database: "bamazon_db"
  });
-//create a connection for funtion if get an err 
+ //create a connection for funtion if get an err 
  connection.connect(function (err) {
    if (err) throw err;
    console.log("connected as id " + connection.threadId);
+   showProducts();
+   
+ });
+ //thequery connection that select the product table 
 
-   //thequery connection that select the product table 
-
-   connection.query("SELECT * FROM products", function (err, res) {
+ function showProducts() {
+   connection.query("SELECT item_id, product_name, price FROM products", function (err, res) {
      if (err) throw err;
-    //  const resTab = res.reduce((acc, {
-    //    item_id,
-    //    ...x
-    //  }) => {
-    //    acc[item_id] = x;
-    //    return acc
-    //  }, {})
-    //  console.table(resTab);
-    //  calling the prompt need 
-     inquirer.prompt([{
+     console.table(res);
+     askUser();
+   })
+ }
+
+
+
+
+
+ //calling the prompt need 
+ function askUser() {
+  
+   inquirer
+     .prompt([{
          type: "input",
          message: "What is the ID of the products you would like to buy: ",
-         name: "itemID"
+         name: "listID"
        },
        {
          type: "input",
@@ -46,70 +53,44 @@
        }
        //create a check function to select the stock_quantity of products available
      ]).then(function (answers) {
-       check();
 
-       function check() {
-         connection.query("SELECT stock_quantity, price FROM products WHERE item_id = " + answers.itemID, function (err, res) {
-           if (err) throw err;
-          //  console.table(res);
-
-           let store_quantity = res[0].stock_quantity;
-           let newPrice = parseFloat(res[0].price);
-
-           if(store_quantity < answers.quantity){
-             console.log("Insuffcient Quantity!!! Cannot buy all these items!")
+       connection.query("SELECT * FROM products", function (err, res) {
+         if (err) throw err;
+        
+         let = chosenItem = "";
+         for (var i = 0; i < res.length; i++) {
+           if (res[i].item_id === parseInt(answers.listID)) {
+             chosenItem = res[i];
            }
-           else{
-            let newStore_quantity = store_quantity - answers.quantity;
+         }
+         // let store_quantity = res[0].stock_quantity;
+         // let newCost = parseFloat(res[0].price);
+// console.log(chosenItem);
 
-            let totalCost = newPrice * answers.quantity;
- 
-            console.log("Your total cost comes out to: " + totalCost);
-
-            update();
-           function update() {
-             connection.query("UPDATE products SET ? WHERE ?",[{
-               stock_quantity: newStore_quantity
-             },{
-               item_id: answers.itemID
-             }],function(err, res){
-               if (err) throw err;
-
-              //  console.log (res);
-               
-               
-             })
-           }
-
-
-
-          //  console.log(store_quantity);
+         if (parseInt(chosenItem.stock_quantity) < parseInt(answers.quantity)) {
+           console.log("Insuffcient Quantity!!! Cannot buy all these items!")
+          showProducts();
+         } else {
+           let newStore_quantity = chosenItem.stock_quantity - parseInt(answers.quantity);
           //  console.log(newStore_quantity);
 
+           let totalCost = chosenItem.price * parseFloat(answers.quantity);
+
+           console.log("Order placed! Your total cost comes out to: $" + totalCost);
            
-           }
-           //  "SELECT * FROM WHERE ?"
-           //  console.table(res);
-           // //Make a select function for the purschase
-           //  "SELECT * FROM WHERE ?"
-           //  [
-           // {
-           //  item_id: itemID
-           //  }
-           // ]
-
-           // function (err, res) { p
-           //   if (err) throw err;
-           //   if (purchase)
-
-         });
-       };
+           connection.query("UPDATE products SET ? WHERE ?", [{
+               stock_quantity: newStore_quantity
+             },
+             {
+               item_id: answers.listID
+             }
+           ], function (err, res) {
+             if (err) throw err;
 
 
-
-
-
-       //  connection.end();
-     });
-   });
- });
+           })
+           showProducts();
+         }
+       });
+     })
+ }
